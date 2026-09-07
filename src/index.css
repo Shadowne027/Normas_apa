@@ -1,0 +1,256 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0c1017;
+  --color-ink-2: #111726;
+  --color-panel: #151c2e;
+  --color-panel-2: #1a2338;
+  --color-line: #26304a;
+  --color-line-soft: #1d2740;
+  --color-snow: #e8ecf4;
+  --color-mist: #94a1b9;
+  --color-faint: #5d6b85;
+  --color-gold: #e9b44c;
+  --color-gold-hi: #f4c869;
+  --color-gold-deep: #b98a2f;
+  --color-pen: #ef4b3f;
+  --color-mint: #46c68a;
+  --color-paper: #fdfcf7;
+  --font-display: "Bricolage Grotesque", "Georgia", serif;
+  --font-body: "Instrument Sans", "Segoe UI", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-snow);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* ---------- fondo ambiental por capas ---------- */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ambient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(232, 236, 244, 0.045) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 78%);
+}
+.ambient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(52rem 30rem at 8% -6%, rgba(233, 180, 76, 0.09), transparent 60%),
+    radial-gradient(46rem 30rem at 102% 108%, rgba(239, 75, 63, 0.07), transparent 62%),
+    radial-gradient(40rem 26rem at 85% 6%, rgba(70, 198, 138, 0.04), transparent 60%);
+}
+.glyph {
+  position: absolute;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(233, 180, 76, 0.07);
+  user-select: none;
+  animation: drift 46s ease-in-out infinite alternate;
+}
+.glyph.g2 {
+  -webkit-text-stroke-color: rgba(232, 236, 244, 0.05);
+  animation-duration: 58s;
+  animation-direction: alternate-reverse;
+}
+.glyph.g3 {
+  -webkit-text-stroke-color: rgba(239, 75, 63, 0.06);
+  animation-duration: 40s;
+}
+@keyframes drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+  50% {
+    transform: translate3d(2.5rem, -2rem, 0) rotate(-2deg);
+  }
+  100% {
+    transform: translate3d(-1.5rem, 2.5rem, 0) rotate(-8deg);
+  }
+}
+
+/* ---------- revelado al hacer scroll ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--rd, 0ms);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- micro-animaciones ---------- */
+@keyframes pop {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.3;
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.chip-pop {
+  animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.toast-in {
+  animation: toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes scan {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.analyzing {
+  background-image: linear-gradient(
+    100deg,
+    rgba(233, 180, 76, 0) 30%,
+    rgba(233, 180, 76, 0.14) 50%,
+    rgba(233, 180, 76, 0) 70%
+  );
+  background-size: 200% 100%;
+  animation: scan 1.4s linear infinite;
+}
+
+@keyframes blink-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.caret-blink {
+  animation: blink-caret 1s step-end infinite;
+}
+
+/* ---------- scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2b3654 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2b3654;
+  border-radius: 8px;
+}
+
+/* ---------- vista previa APA ---------- */
+.apa-page {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  background: var(--color-paper);
+  color: #1b1b1b;
+  box-shadow:
+    0 0 0 1px rgba(232, 236, 244, 0.08),
+    0 24px 60px -18px rgba(0, 0, 0, 0.65);
+  border-radius: 3px;
+  position: relative;
+  flex-shrink: 0;
+  transition: box-shadow 0.3s ease;
+}
+.apa-page:hover {
+  box-shadow:
+    0 0 0 1px rgba(233, 180, 76, 0.35),
+    0 30px 70px -18px rgba(0, 0, 0, 0.75);
+}
+
+/* subrayado a mano (pluma roja) */
+.pen-underline {
+  position: relative;
+  white-space: nowrap;
+}
+.pen-underline svg {
+  position: absolute;
+  left: -2%;
+  bottom: -0.28em;
+  width: 104%;
+  height: 0.42em;
+  overflow: visible;
+}
+.pen-underline svg path {
+  stroke: var(--color-pen);
+  stroke-width: 3.2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: pen-draw 0.9s 0.5s cubic-bezier(0.6, 0, 0.3, 1) forwards;
+}
+@keyframes pen-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------- impresión ---------- */
+@media print {
+  body {
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  #print-root {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+  }
+  #print-root .print-scale {
+    transform: none !important;
+    width: auto !important;
+  }
+  .apa-page {
+    box-shadow: none !important;
+    border-radius: 0;
+    margin: 0 auto !important;
+    page-break-after: always;
+  }
+}
