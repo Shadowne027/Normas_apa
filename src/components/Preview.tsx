@@ -30,7 +30,7 @@ function BlockView({ block, indentPx }: { block: Block; indentPx: number }) {
     case "h5":
       return <p style={{ fontWeight: 700, fontStyle: "italic", textIndent: indentPx }}>{runs}.</p>;
     case "refHeading":
-      return <p style={{ textAlign: "center", fontWeight: 700, textIndent: 0 }}>Referencias</p>;
+      return <p style={{ textAlign: "center", fontWeight: 700, textIndent: 0 }}>{runs}</p>;
     case "abstract":
       return <p style={{ textIndent: 0 }}>{runs}</p>;
     case "quote":
@@ -73,7 +73,7 @@ export default function Preview({ pages, opts, hasContent, analyzing }: PreviewP
     height: m.pageHPx,
     padding: m.marginPx,
     fontSize: m.fontPx,
-    lineHeight: opts.spacing,
+    lineHeight: opts.spacing === 2 ? "2" : "1.5",
     fontFamily: `"${opts.fontFamily}", "Times New Roman", Times, Georgia, serif`,
     overflow: "hidden",
   };

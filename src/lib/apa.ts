@@ -446,7 +446,7 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
       c.mdHeadings++;
       const level = (single.match(/^#+/) ?? ["#"])[0].length;
       const out = pushHeading(single, level);
-      handleHeadingSideEffects(out);
+      handleHeadingSideEffects(out, single);
       continue;
     }
 
@@ -467,7 +467,7 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
       if (looksHeading || (wordCount(single) <= 5 && !/^\d/.test(single))) {
         const level = isKnown ? 1 : (chapterMatch ? 1 : 2);
         const out = pushHeading(single, level);
-        handleHeadingSideEffects(out);
+        handleHeadingSideEffects(out, single);
         continue;
       }
     }
@@ -497,13 +497,14 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
     if (wordCount(joined) > 250) c.longParagraphs++;
     blocks.push(makeParagraph(joined));
 
-    function handleHeadingSideEffects(out: string) {
+    function handleHeadingSideEffects(out: string, original?: string) {
       const h = stripAccents(out.toLowerCase().replace(/^(\d+[\.\)]\s*)?/, ""));
       if (h === "referencias" || h === "bibliografia" || h === "bibliografia general") {
         if (h !== "referencias") c.biblioRenamed = true;
         state.mode = "refs";
         blocks.pop();
-        blocks.push({ type: "refHeading", runs: [{ t: "Referencias", b: true }] });
+        // Preservar el nombre original del encabezado
+        blocks.push({ type: "refHeading", runs: [{ t: out, b: true }] });
       } else if (h === "resumen" || h === "abstract") {
         state.mode = "abstract";
       } else if (h === "indice" || h === "tabla de contenido") {

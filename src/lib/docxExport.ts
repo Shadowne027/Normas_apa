@@ -128,7 +128,7 @@ export async function exportToDocx(analysis: Analysis, opts: ApaOptions): Promis
         children.push(mk(b.runs, { bold: true, italic: true, firstLine: true }));
         break;
       case "refHeading":
-        children.push(mk([{ t: "Referencias" }], { align: AlignmentType.CENTER, bold: true }));
+        children.push(mk(b.runs, { align: AlignmentType.CENTER, bold: true }));
         break;
       case "abstract":
         children.push(mk(b.runs));

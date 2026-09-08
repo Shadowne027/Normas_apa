@@ -53,7 +53,7 @@ export function exportToHtml(analysis: Analysis, opts: ApaOptions): void {
         body.push(`<p class="inline-h">${inner}.</p>`);
         break;
       case "refHeading":
-        body.push(`<h1>Referencias</h1>`);
+        body.push(`<h1>${inner}</h1>`);
         break;
       case "abstract":
         body.push(`<p class="no-indent">${inner}</p>`);
