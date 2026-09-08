@@ -44,6 +44,10 @@ function BlockView({ block, indentPx }: { block: Block; indentPx: number }) {
           {runs}
         </p>
       );
+    case "toc":
+      return <p style={{ textIndent: 0, fontSize: "0.95em" }}>{runs}</p>;
+    case "annex":
+      return <p style={{ textIndent: indentPx }}>{runs}</p>;
     default:
       return <p style={{ textIndent: block.cont ? 0 : indentPx }}>{runs}</p>;
   }

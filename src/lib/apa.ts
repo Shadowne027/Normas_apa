@@ -14,7 +14,9 @@ export type BlockType =
   | "quote"
   | "reference"
   | "list"
-  | "refHeading";
+  | "refHeading"
+  | "toc"
+  | "annex";
 
 export interface Run {
   t: string;
@@ -197,6 +199,14 @@ export function formatReference(raw: string): RefResult {
     rest = text.slice(cut).replace(/^\.?\s*/, "");
   }
 
+  // Detectar URL al final
+  const urlMatch = /\s+(https?:\/\/[^\s]+)$/.exec(rest);
+  let url = "";
+  if (urlMatch) {
+    url = urlMatch[1];
+    rest = rest.slice(0, urlMatch.index);
+  }
+
   // fin del título: primer ". " seguido de mayúscula, dígito o https
   let titleEnd = -1;
   for (let i = 0; i < rest.length - 1; i++) {
@@ -233,44 +243,52 @@ export function formatReference(raw: string): RefResult {
     }
   }
 
+  // Agregar URL si existe
+  if (url) {
+    runs.push({ t: " " + url });
+  }
+
   const sortKey = stripAccents(text.replace(/^[^a-záéíóúñA-ZÁÉÍÓÚÑ]*/u, "").toLowerCase());
   return { runs: runs.filter((r) => r.t.length > 0), sortKey, fixes };
 }
 
 /* ---------------- análisis principal ---------------- */
 
-const LEVEL1_HINTS = new Set(
-  [
-    "introduccion",
-    "marco teorico",
-    "antecedentes",
-    "metodo",
-    "metodologia",
-    "materiales y metodo",
-    "materiales y metodos",
-    "planteamiento del problema",
-    "objetivos",
-    "justificacion",
-    "hipotesis",
-    "resultados",
-    "discusion",
-    "conclusion",
-    "conclusiones",
-    "referencias",
-    "bibliografia",
-    "anexos",
-    "anexo",
-    "apendices",
-    "apendice",
-    "resumen",
-    "abstract",
-  ].map(stripAccents)
-);
+const LEVEL1_HINTS = new Set([
+  "introduccion",
+  "marco teorico",
+  "antecedentes",
+  "metodo",
+  "metodologia",
+  "materiales y metodo",
+  "materiales y metodos",
+  "planteamiento del problema",
+  "objetivos",
+  "justificacion",
+  "hipotesis",
+  "resultados",
+  "discusion",
+  "conclusion",
+  "conclusiones",
+  "referencias",
+  "bibliografia",
+  "anexos",
+  "anexo",
+  "apendices",
+  "apendice",
+  "resumen",
+  "abstract",
+  "indice",
+  "tabla de contenido",
+  "introduccion general",
+  "discusion general",
+]);
 
 function normHeading(s: string): string {
   return stripAccents(
     s
       .replace(/^#+\s*/, "")
+      .replace(/^(\d+[\.\)]\s*)?/, "") // quitar numeración inicial
       .replace(/[:.]+$/, "")
       .trim()
       .toLowerCase()
@@ -355,7 +373,7 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
   }
 
   /* --- 2. clasificación por bloques --- */
-  const state: { mode: "body" | "abstract" | "refs" } = { mode: "body" };
+  const state: { mode: "body" | "abstract" | "refs" | "toc" | "annex" } = { mode: "body" };
   const refEntries: string[] = [];
   const warnings: string[] = [];
   let detectedTitle = "";
@@ -391,7 +409,7 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
       state.mode = "body";
       let quote = lines.map((l) => l.replace(/^>\s?/, "")).join(" ");
       const wc = wordCount(quote);
-      if (wc >= 40 && /^["“”«]/.test(quote) && /["”»]$/.test(quote)) {
+      if (wc >= 40 && /^["""«]/.test(quote) && /[""»]$/.test(quote)) {
         quote = quote.slice(1, -1).trim();
         c.quotesStripped++;
       }
@@ -438,14 +456,16 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
       wordCount(single) <= 14 &&
       !/[.;,]$/.test(single) &&
       !/^(https?:|www\.)/i.test(single) &&
-      !/^([-*•◦]|\d+[.)])\s/.test(single) &&
-      !/^[("“«]/.test(single)
+      !/^[(\"""«]/.test(single)
     ) {
+      // Detectar si es un capítulo numerado
+      const chapterMatch = /^(Cap[ií]tulo\s+\d+|\d+[\.\)]\s+[A-ZÁÉÍÓÚÑ])/.test(single);
       const hint = normHeading(single);
       const isKnown = LEVEL1_HINTS.has(hint);
-      const looksHeading = isKnown || isAllCaps(single) || /^(Capítulo|CAPITULO)\s/i.test(single);
-      if (looksHeading || wordCount(single) <= 5) {
-        const level = isKnown ? 1 : 2;
+      const looksHeading = isKnown || isAllCaps(single) || chapterMatch;
+      
+      if (looksHeading || (wordCount(single) <= 5 && !/^\d/.test(single))) {
+        const level = isKnown ? 1 : (chapterMatch ? 1 : 2);
         const out = pushHeading(single, level);
         handleHeadingSideEffects(out);
         continue;
@@ -455,6 +475,16 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
     /* contenido según modo */
     if (state.mode === "refs") {
       refEntries.push(rawBlock.replace(/\n/g, " "));
+      continue;
+    }
+
+    if (state.mode === "toc") {
+      blocks.push({ type: "toc", runs: [{ t: rawBlock.replace(/\n/g, " ") }] });
+      continue;
+    }
+
+    if (state.mode === "annex") {
+      blocks.push({ type: "annex", runs: [{ t: rawBlock.replace(/\n/g, " ") }] });
       continue;
     }
 
@@ -468,7 +498,7 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
     blocks.push(makeParagraph(joined));
 
     function handleHeadingSideEffects(out: string) {
-      const h = stripAccents(out.toLowerCase());
+      const h = stripAccents(out.toLowerCase().replace(/^(\d+[\.\)]\s*)?/, ""));
       if (h === "referencias" || h === "bibliografia" || h === "bibliografia general") {
         if (h !== "referencias") c.biblioRenamed = true;
         state.mode = "refs";
@@ -476,6 +506,10 @@ export function analyzeText(rawInput: string, opts: ApaOptions): Analysis {
         blocks.push({ type: "refHeading", runs: [{ t: "Referencias", b: true }] });
       } else if (h === "resumen" || h === "abstract") {
         state.mode = "abstract";
+      } else if (h === "indice" || h === "tabla de contenido") {
+        state.mode = "toc";
+      } else if (h === "anexos" || h === "anexo" || h === "apendices" || h === "apendice") {
+        state.mode = "annex";
       } else {
         state.mode = "body";
       }

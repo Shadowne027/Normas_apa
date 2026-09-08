@@ -147,6 +147,12 @@ export async function exportToDocx(analysis: Analysis, opts: ApaOptions): Promis
           )
         );
         break;
+      case "toc":
+        children.push(mk(b.runs, { firstLine: false }));
+        break;
+      case "annex":
+        children.push(mk(b.runs, { firstLine: true }));
+        break;
       default:
         children.push(mk(b.runs, { firstLine: !b.cont }));
     }

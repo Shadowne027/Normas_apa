@@ -198,10 +198,23 @@ export default function App() {
           const buf = await file.arrayBuffer();
           const res = await mammoth.extractRawText({ arrayBuffer: buf });
           setText(res.value.trim());
+        } else if (/\.pdf$/i.test(file.name)) {
+          const pdfjsLib = await import("pdfjs-dist");
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+          const buf = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+          const textParts: string[] = [];
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items.map((item: any) => item.str).join(" ");
+            textParts.push(pageText);
+          }
+          setText(textParts.join("\n\n").trim());
         } else if (/\.(txt|md|markdown|text)$/i.test(file.name)) {
           setText((await file.text()).trim());
         } else {
-          showToast("Formato no compatible. Usa .txt, .md o .docx", "err");
+          showToast("Formato no compatible. Usa .txt, .md, .pdf o .docx", "err");
           setReading(false);
           return;
         }
@@ -325,7 +338,7 @@ export default function App() {
         <section className="mx-auto w-full max-w-[1500px] px-5 pb-16 sm:px-8">
           <div className="grid gap-6 xl:grid-cols-[430px_1fr]">
             {/* columna izquierda: entrada + opciones */}
-            <div className="no-print space-y-6 xl:sticky xl:top-24 xl:self-start">
+            <div className="no-print space-y-6 xl:sticky xl:top-24 xl:self-start xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:pr-2">
               {/* documento */}
               <div className="rounded-xl border border-line-soft bg-panel/90 p-6 backdrop-blur-sm transition-colors duration-300 focus-within:border-gold/40">
                 <div className="flex items-baseline justify-between">
@@ -388,14 +401,14 @@ export default function App() {
                     ) : (
                       <>
                         Arrastra un archivo o <span className="font-semibold text-gold">haz clic para subir</span>
-                        <span className="block text-[12px] text-faint">.txt · .md · .docx</span>
+                        <span className="block text-[12px] text-faint">.txt · .md · .pdf · .docx</span>
                       </>
                     )}
                   </span>
                   <input
                     ref={fileRef}
                     type="file"
-                    accept=".txt,.md,.markdown,.text,.docx"
+                    accept=".txt,.md,.markdown,.text,.docx,.pdf"
                     className="hidden"
                     onChange={(e) => {
                       if (e.target.files?.length) handleFiles(e.target.files);
