@@ -53,7 +53,7 @@ export function exportToHtml(analysis: Analysis, opts: ApaOptions): void {
         body.push(`<p class="inline-h">${inner}.</p>`);
         break;
       case "refHeading":
-        body.push(`<h1>Referencias</h1>`);
+        body.push(`<h1>${inner}</h1>`);
         break;
       case "abstract":
         body.push(`<p class="no-indent">${inner}</p>`);
@@ -66,6 +66,12 @@ export function exportToHtml(analysis: Analysis, opts: ApaOptions): void {
         break;
       case "list":
         body.push(`<p class="list">${b.ordered ? `${b.n ?? 1}. ` : "• "}${inner}</p>`);
+        break;
+      case "toc":
+        body.push(`<p class="toc">${inner}</p>`);
+        break;
+      case "annex":
+        body.push(`<p>${inner}</p>`);
         break;
       default:
         body.push(`<p>${inner}</p>`);
@@ -93,6 +99,7 @@ export function exportToHtml(analysis: Analysis, opts: ApaOptions): void {
   .quote { text-indent: 0; margin-left: ${cm(opts.indentCm)}; }
   .ref { text-indent: -${cm(opts.indentCm)}; padding-left: ${cm(opts.indentCm)}; }
   .list { text-indent: -${cm(opts.indentCm)}; padding-left: ${cm(opts.indentCm)}; }
+  .toc { text-indent: 0; font-size: 0.95em; }
   .cover { display: flex; }
   .cover-inner { margin: auto; text-align: center; }
   .center { text-align: center; text-indent: 0; }
